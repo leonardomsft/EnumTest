@@ -9,6 +9,7 @@ BOOL bRecurse = FALSE;
 int intTestType = 1;
 
 long int intObjectsTotal = 0;
+long int intObjectsCurrent = 0;
 long int intObjectsError = 0;
 long int intLastObjectsTotal = 0;
 long int intObjectsPerPeriod = 0;
@@ -16,6 +17,7 @@ long int intObjectsPerPeriod = 0;
 //Prototypes
 void DisplayError(LPWSTR lpszFunction);
 int EnumDir(LPWSTR szDir);
+int GetObjectsTotal(LPWSTR szDir);
 void ReadTargetFile(LPWSTR szFile, DWORD dwSizeinBytes);
 void GetTargetAttributes(LPWSTR szFile);
 int ReadOwner(LPWSTR szFile);
@@ -72,6 +74,14 @@ int wmain(int argc, WCHAR* argv[])
     }
          
 
+    StringCchCopyW(szTarget, MAX_PATH, argv[1]);
+
+
+    //Obtain objects count
+    GetObjectsTotal(szTarget);
+
+
+    //Launch reporter thread
     hReporterThread = CreateThread(
         NULL,
         NULL,
@@ -88,9 +98,7 @@ int wmain(int argc, WCHAR* argv[])
     }
 
 
-
-    StringCchCopyW(szTarget, MAX_PATH, argv[1]);
-
+    //Run the enumeration
     EnumDir(szTarget);
 
     CloseHandle(hReporterThread);
@@ -101,7 +109,7 @@ int wmain(int argc, WCHAR* argv[])
 
 
     wprintf(L"\n--------------- Test Results ---------------\n");
-    wprintf(L"Total Objects found: %d\n", intObjectsTotal);
+    wprintf(L"Total Objects found: %d\n", intObjectsCurrent);
     wprintf(L"Total Errors: %d\n", intObjectsError);
     wprintf(L"Total elapsed time: %0.1f seconds\n\n", elapsed);
 }
@@ -115,7 +123,7 @@ int EnumDir(LPWSTR szTarget)
     HANDLE hFind = INVALID_HANDLE_VALUE;
     WIN32_FIND_DATAW ffd;
     LARGE_INTEGER filesize;
-    
+
 
     //wprintf(L"\nDirectory is %s\n\n", szTarget);
 
@@ -131,7 +139,7 @@ int EnumDir(LPWSTR szTarget)
     if (INVALID_HANDLE_VALUE == hFind)
     {
         //wprintf(L"ERROR: 0x%X\n", GetLastError());
-        DisplayError((LPWSTR)L"FindFirstFile");
+        //DisplayError((LPWSTR)L"FindFirstFile");
 
         intObjectsError++;
 
@@ -165,7 +173,7 @@ int EnumDir(LPWSTR szTarget)
             filesize.LowPart = ffd.nFileSizeLow;
             filesize.HighPart = ffd.nFileSizeHigh;
             //wprintf(L"  %s   %ld bytes\n", ffd.cFileName, filesize.QuadPart);
-        
+
 
             if (intTestType == 2)
                 GetTargetAttributes(szNewTarget);
@@ -179,6 +187,60 @@ int EnumDir(LPWSTR szTarget)
 
 
 
+        //increment
+        intObjectsCurrent++;
+
+    } while (FindNextFileW(hFind, &ffd) != 0);
+
+
+    FindClose(hFind);
+
+}
+
+int GetObjectsTotal(LPWSTR szTarget)
+{
+    WCHAR szDir[MAX_PATH];
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATAW ffd;
+    long int intCount = 0;
+    WCHAR szNewTarget[MAX_PATH];
+
+
+    //Prepare the string
+    StringCchCopyW(szDir, MAX_PATH, szTarget);
+    StringCchCatW(szDir, MAX_PATH, L"\\*");
+
+
+    // Find the first file in the directory
+
+    hFind = FindFirstFileW(szDir, &ffd);
+
+    if (INVALID_HANDLE_VALUE == hFind)
+    {
+        return -1;
+    }
+
+    // Count all the files in the directory 
+
+    do
+    {
+        StringCchCopyW(szNewTarget, MAX_PATH, szTarget);
+        StringCchCatW(szNewTarget, MAX_PATH, L"\\");
+        StringCchCatW(szNewTarget, MAX_PATH, ffd.cFileName);
+
+
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            //wprintf(L"  %s   <DIR>\n", ffd.cFileName);
+
+            if (wcscmp(ffd.cFileName, L".") && wcscmp(ffd.cFileName, L".."))
+            {
+                //Recurse here
+                if (bRecurse)
+                    GetObjectsTotal(szNewTarget);
+
+            }
+        }
         //increment
         intObjectsTotal++;
 
@@ -381,28 +443,45 @@ BOOL ReporterThread(int RefRate)
 {
     if (RefRate == 0) RefRate = 1;
     int intRefreshRate = RefRate * 1000;
+    float PercentCompletion = 0;
+    float EstimatedCompletion = 0;
+    int intLoopCount = 1;
+    int intAverageCount = 0;
 
     //Start the timer
     auto start = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed;
+    
+
+    wprintf(L"Total objects in the directory: %d\n\n", intObjectsTotal);
+
 
 
     while (TRUE)
     {
-        intLastObjectsTotal = intObjectsTotal;
+        intLastObjectsTotal = intObjectsCurrent + 1;
 
         Sleep(intRefreshRate);
 
-        intObjectsPerPeriod = intObjectsTotal - intLastObjectsTotal;
+        intObjectsPerPeriod = intObjectsCurrent - intLastObjectsTotal;
+
+        intAverageCount = intObjectsCurrent / intLoopCount;
+
+        PercentCompletion = ((float)intObjectsCurrent / (float)intObjectsTotal) * 100;
+
+        EstimatedCompletion = (((float)intObjectsTotal / (float)intAverageCount) * intRefreshRate) / 1000 ;
+
 
         //Stop the timer
         auto finish = std::chrono::high_resolution_clock::now();
         elapsed = finish - start;
 
-        wprintf(L"  # of objects found: %d\n", intObjectsTotal);
-        wprintf(L"  # of objects every %d seconds : %d\n", RefRate, intObjectsPerPeriod);
-        wprintf(L"  Partial elapsed time: %0.1f seconds\n\n", elapsed);
+        //estimated = elapsed
 
+        wprintf(L"  # of objects enumerated: %d (%0.0f%%)\n", intObjectsCurrent, PercentCompletion);
+        wprintf(L"  # of objects every %d seconds : %d (%d on average)\n", RefRate, intObjectsPerPeriod, intAverageCount);
+        wprintf(L"  Partial elapsed time: %0.0f seconds (estimated completion time: %0.0f seconds)\n\n", elapsed, EstimatedCompletion);
 
+        intLoopCount++;
     }
 }
