@@ -6,10 +6,10 @@ Windows API's FindFirstFile and FindNextFile are commonly used by applications t
 
 For example, SAP transaction AL11 calls this sequence of API's against every file returned by FindFirstFile/FindNextFile
 
-GetFileAttributes()
-GetFileType()
-GetFileSize()
-GetFileSecurity()
+GetFileAttributes
+GetFileType
+GetFileSize
+GetFileSecurity
 
 If the enumeration takes 30 minutes or more, the operation times out and displays an error. Additionally, there is no progress bar or partial results, so the user never knows if it's going to be a successful or failed run.
 
