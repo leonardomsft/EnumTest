@@ -17,7 +17,7 @@ EnumTest enables support engineers to quickly diagnose these types of issues by 
 
 ## Usage
 
-EnumTest.exe <directory name> <refresh rate in seconds> <test type>
+EnumTest.exe <<directory name>> <<refresh rate in seconds>> <<test type>>
 
 Test Types:
   1 - Enumeration only
