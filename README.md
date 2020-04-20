@@ -4,7 +4,7 @@ EnumTest is a directory enumeration test utility. It helps diagnose performance 
 
 Windows API's FindFirstFile and FindNextFile are commonly used by applications to enumerate directory content. However, some applications also call other API's to obtain extended file information, which can cause poor enumeration performance.
 
-For example, SAP transaction AL11 calls this sequence of API's against every file returned by FindFirstFile/FindNextFile
+For example, in addition to FindFirstFile/FindNextFile, SAP transaction AL11 also calls these API's against every returned file:
 
 GetFileAttributes
 GetFileType
