@@ -42,7 +42,7 @@ int wmain(int argc, WCHAR* argv[])
     
     if (argc != 4)
     {
-        wprintf(L"\nUsage: EnumTest.exe <directory name> <refresh rate in seconds> <test type>\n");
+        wprintf(L"\nUsage: EnumTest.exe <directory name> <refresh rate in seconds>  <test type>\n");
         wprintf(L"\nTest Types:\n  1 - Enumeration only\n  2 - Enumeration + Atributes\n");
         wprintf(L"\nExample: EnumTest.exe ""\\SERVER01\Docs"" 1 2\n\n");
 
