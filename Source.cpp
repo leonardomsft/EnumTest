@@ -23,12 +23,30 @@ void GetTargetAttributes(LPWSTR szFile);
 int ReadOwner(LPWSTR szFile);
 BOOL ReporterThread(int RefRate);
 
+#define COMMAND_REFRESH		L"-refresh"
+#define COMMAND_RECURSE		L"-recurse"
+#define COMMAND_EXTENDED	L"-extended"
+
+
+void print_help()
+{
+    wprintf(L"\nUsage: EnumTest.exe <path> <options> \n\n");
+    wprintf(L"Arguments:\n  -recurse (Optional): Recurse through subdirectories. (Default = Not recurse)\n");
+    wprintf(L"  -extended (optional): Performs enumeration + gathers file atributes. (Default = enumeration only)\n");
+    wprintf(L"  -refresh <seconds> (Optional): Refresh rate in seconds. (Default = 2 seconds)\n\n");
+    wprintf(L"Example 1: EnumTest.exe \\SERVER01\Docs\n");
+    wprintf(L"Example 2: EnumTest.exe C:\Temp\Docs -recurse\n");
+    wprintf(L"Example 3: EnumTest.exe C:\Temp\Docs -recurse -extended\n");
+    wprintf(L"Example 4: EnumTest.exe C:\Temp\Docs -recurse -extended -refresh 10\n");
+
+}
+
 int wmain(int argc, WCHAR* argv[])
 {
     HANDLE hReporterThread;
     WCHAR szTarget[MAX_PATH];
     size_t length_of_arg;
-    int intRefRate = 0;
+    int intRefRate = 2;
 
     //Start the timer
     auto start = std::chrono::high_resolution_clock::now();
@@ -38,16 +56,31 @@ int wmain(int argc, WCHAR* argv[])
     wprintf(L"Created by Leonardo Fagundes. No rights reserved.\n\n");
 
 
-    //Expect 3 arguments
-    
-    if (argc != 4)
+    if (argc < 2)
     {
-        wprintf(L"\nUsage: EnumTest.exe <directory name> <refresh rate in seconds>  <test type>\n");
-        wprintf(L"\nTest Types:\n  1 - Enumeration only\n  2 - Enumeration + Atributes\n");
-        wprintf(L"\nExample: EnumTest.exe ""\\SERVER01\Docs"" 1 2\n\n");
+        print_help();
 
-        return (-1);
+        return(-1);
     }
+
+
+    //Parse arguments
+    for (int i = 1; i < argc; i++)
+    {
+        if (!wcscmp(COMMAND_REFRESH, argv[i]))
+        {
+            intRefRate = wcstol(argv[++i], NULL, 10);
+            //i++;
+        }
+        else if (!wcscmp(COMMAND_EXTENDED, argv[i]))
+            intTestType = 2;
+        else if (!wcscmp(COMMAND_RECURSE, argv[i]))
+            bRecurse = true;
+        else
+            StringCchCopyW(szTarget, MAX_PATH, argv[i]);
+    }
+
+
 
     //Directory name + 3 must not be longer than MAX_PATH (trailing "\*" + NULL needs to be appended)
 
@@ -55,26 +88,10 @@ int wmain(int argc, WCHAR* argv[])
 
     if (length_of_arg > (MAX_PATH - 3))
     {
-        wprintf(L"\nDirectory path is too long.\n");
+        wprintf(L"\nPath is too long.\n");
 
         return (-1);
     }
-
-    intRefRate = _wtoi(argv[2]);
-
-    intTestType = _wtoi(argv[3]);
-
-
-    if (intTestType < 1 || intTestType > 2)
-    {
-        wprintf(L"\nInvalid Test Type.\n");
-
-        return (-1);
-
-    }
-         
-
-    StringCchCopyW(szTarget, MAX_PATH, argv[1]);
 
 
     //Obtain objects count
@@ -111,7 +128,7 @@ int wmain(int argc, WCHAR* argv[])
     wprintf(L"\n--------------- Test Results ---------------\n");
     wprintf(L"Total Objects found: %d\n", intObjectsCurrent);
     wprintf(L"Total Errors: %d\n", intObjectsError);
-    wprintf(L"Total elapsed time: %0.1f seconds\n\n", elapsed);
+    wprintf(L"Total time: %0.1f seconds\n\n", elapsed);
 }
 
 
@@ -478,9 +495,9 @@ BOOL ReporterThread(int RefRate)
 
         //estimated = elapsed
 
-        wprintf(L"  # of objects enumerated: %d (%0.0f%%)\n", intObjectsCurrent, PercentCompletion);
+        wprintf(L"  # of objects found: %d (%0.0f%%)\n", intObjectsCurrent, PercentCompletion);
         wprintf(L"  # of objects every %d seconds : %d (%d on average)\n", RefRate, intObjectsPerPeriod, intAverageCount);
-        wprintf(L"  Partial elapsed time: %0.0f seconds (estimated completion time: %0.0f seconds)\n\n", elapsed, EstimatedCompletion);
+        wprintf(L"  Elapsed time: %0.0f seconds (estimated completion time: %0.0f seconds)\n\n", elapsed, EstimatedCompletion);
 
         intLoopCount++;
     }
