@@ -24,7 +24,6 @@ Example 2: EnumTest.exe C:\Temp\Docs -recurse
 Example 3: EnumTest.exe C:\Temp\Docs -recurse -extended
 Example 4: EnumTest.exe C:\Temp\Docs -recurse -extended -refresh 10
 
-
 ## Example
 
 ![Alt text](screenshot1.png?raw=true "Image1")
