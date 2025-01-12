@@ -19,10 +19,16 @@ EnumTest enables support engineers to quickly diagnose these types of issues by 
 
 EnumTest.exe <path> <options>
 
-Example 1: EnumTest.exe \\SERVER01\Docs\
-Example 2: EnumTest.exe C:\Temp\Docs -recurse
-Example 3: EnumTest.exe C:\Temp\Docs -recurse -extended
-Example 4: EnumTest.exe C:\Temp\Docs -recurse -extended -refresh 10
+Examples:
+
+EnumTest.exe \\SERVER01\Docs\
+
+EnumTest.exe C:\Temp\Docs -recurse
+
+EnumTest.exe C:\Temp\Docs -recurse -extended
+
+EnumTest.exe C:\Temp\Docs -recurse -extended -refresh 10
+
 
 ## Example
 
