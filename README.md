@@ -17,7 +17,7 @@ EnumTest enables support engineers to quickly diagnose these types of issues by 
 
 ## Usage
 
-EnumTest.exe <path> <options>
+EnumTest.exe &lt;path&gt; &lt;options&gt;
 
 Examples:
 
