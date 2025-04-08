@@ -2,18 +2,9 @@
 
 EnumTest is a directory enumeration test utility. It helps diagnose performance issues in directories with a very large number of files/folders.
 
-Windows API's FindFirstFile and FindNextFile are commonly used by applications to enumerate directory content. However, some applications also call other API's to obtain extended file information, which can cause poor enumeration performance.
+Windows API's FindFirstFile and FindNextFile are commonly used by applications to enumerate directory content. However, some applications also call other API's to obtain extended file information, which can cause poor enumeration performance. As an example, SAP transaction AL11 calls GetFileAttributes, GetFileType, GetFileSize, and GetFileSecurity against every file returned by FindFirstFile and FindNextFile. If the enumeration takes 30 minutes or more, the operation times out and displays an error. There is no progress bar or partial results, so the user never knows if it's going to succeed or fail.
 
-For example, in addition to FindFirstFile/FindNextFile, SAP transaction AL11 also calls these API's against every returned file:
-
-GetFileAttributes
-GetFileType
-GetFileSize
-GetFileSecurity
-
-If the enumeration takes 30 minutes or more, the operation times out and displays an error. Additionally, there is no progress bar or partial results, so the user never knows if it's going to be a successful or failed run.
-
-EnumTest enables support engineers to quickly diagnose these types of issues by producing the same sequence of calls and outputing partial results.
+EnumTest enables support engineers to quickly diagnose these types of issues by producing the same sequence of calls and outputing partial results, so it can identify exactly where the problem is.
 
 ## Usage
 
